@@ -6,8 +6,6 @@ class DioUtil {
   factory DioUtil() => _instance;
 
   DioUtil._internal() {
-    print('构造 DioUtil ');
-
     _dio = Dio(BaseOptions(
       baseUrl: 'http://localhost:4800',
       connectTimeout: const Duration(seconds: 10),

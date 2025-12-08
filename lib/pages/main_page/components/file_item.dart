@@ -1,5 +1,4 @@
 import 'package:file_system_app/components/icon_font.dart';
-import 'package:file_system_app/view_models/file.dart';
 import 'package:flutter/material.dart';
 
 class FileItem extends StatefulWidget {
@@ -9,12 +8,15 @@ class FileItem extends StatefulWidget {
   final bool isShowRadio;
   // 打开 Badge 的函数
   final VoidCallback? onShowBadge;
+  // 进入一个新的文件夹的回调函数
+  final VoidCallback? onLoadNewFolder;
 
   const FileItem({
     super.key,
     required this.fileObj,
     required this.isShowRadio,
     this.onShowBadge,
+    this.onLoadNewFolder
   });
 
   @override
@@ -26,12 +28,16 @@ class _FileItemState extends State<FileItem> {
   bool _selectedRow = false;
 
   // 展示文件夹
-  Widget _showDirectory(MyDirectory context) {
+  Widget _showDirectoryView() {
     return GestureDetector(
       onTap: () {
         setState(() {
           if (widget.isShowRadio) {
-            _selectedRow = true;
+            _selectedRow = !_selectedRow;
+          } else {
+            if (widget.onLoadNewFolder != null) {
+              // widget.onLoadNewFolder();
+            }
           }
         });
       },
@@ -62,15 +68,15 @@ class _FileItemState extends State<FileItem> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('文件名称', style: TextStyle(fontFamily: 'SourceHanSansCN', fontSize: 16, fontWeight: FontWeight.w800)),
+                  Text(widget.fileObj['name'] ?? '-', style: TextStyle(fontFamily: 'SourceHanSansCN', fontSize: 16, fontWeight: FontWeight.w800)),
                   SizedBox(height: 8),
                   Text(
-                    '2025-11-26 11:30 - 12项',
+                    '${widget.fileObj['createTime']} - ${widget.fileObj['sonCount']}项',
                     style: TextStyle(
-                        fontFamily: 'SourceHanSansCN',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Color.fromRGBO(0, 0, 0, 0.4)
+                      fontFamily: 'SourceHanSansCN',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color.fromRGBO(0, 0, 0, 0.4)
                     ),
                   ),
                 ],
@@ -103,12 +109,12 @@ class _FileItemState extends State<FileItem> {
   }
 
   // 展示文件
-  Widget _showFile(MyFile context) {
+  Widget _showFileView() {
     return GestureDetector(
       onTap: () {
         setState(() {
           if (widget.isShowRadio) {
-            _selectedRow = true;
+            _selectedRow = !_selectedRow;
           }
         });
       },
@@ -137,10 +143,10 @@ class _FileItemState extends State<FileItem> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('文件名称', style: TextStyle(fontFamily: 'SourceHanSansCN', fontSize: 16, fontWeight: FontWeight.w800)),
+                  Text(widget.fileObj['name'], style: TextStyle(fontFamily: 'SourceHanSansCN', fontSize: 16, fontWeight: FontWeight.w800)),
                   SizedBox(height: 8),
                   Text(
-                    '2025-11-26 11:30 - 24MB',
+                    '${widget.fileObj['createTime']} - ${widget.fileObj['size']}',
                     style: TextStyle(
                       fontFamily: 'SourceHanSansCN',
                       fontSize: 12,
@@ -170,9 +176,9 @@ class _FileItemState extends State<FileItem> {
 
   // 展示正确的文件
   Widget _showCorrectFile() {
-    return widget.fileObj['fileType'] != null && widget.fileObj['fileType'] == 'dic'
-      ? _showDirectory(MyDirectory(fileName: '文件夹', createTime: '2025-11-02 12:12', filePath: 'D:', childrenCount: 0))
-      : _showFile(MyFile(fileName: '文件', createTime: '2025-11-02 12:12', filePath: 'D:', fileSize: '20M'));
+    return widget.fileObj['type'] != null && widget.fileObj['type'] == 'directory'
+      ? _showDirectoryView()
+      : _showFileView();
   }
 
   @override
