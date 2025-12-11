@@ -4,7 +4,9 @@ import 'package:file_system_app/pages/main_page/components/file_item.dart';
 import 'package:flutter/material.dart';
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  final String? argsPath;
+
+  const MainPage({super.key, this.argsPath});
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -15,34 +17,116 @@ class _MainPageState extends State<MainPage> {
   bool _isShowBadge = false;
   // 是否展示子组件中的 radio
   bool _isShowRadio = false;
-  // 访问文件的路径
-  final String _path = 'D:\\MyFiles\\node-resources\\';
+  // 访问文件的基础路径
+  String _basicPath = 'D:\\MyFiles\\node-resources';
   // 文件列表
   List<Map<String, dynamic>> _fileList = [];
+  // 页面是否展示 loading
+  bool _isShowLoading = false;
 
   @override
   void initState() {
     super.initState();
 
+    // 获取文件列表
     _getFileList();
   }
 
-  void _getFileList() {
-    getFileList(_path).then((res) {
-      if (res.statusCode == 200) {
-        List<Map<String, dynamic>> myData = (res.data['data'] as List).cast<Map<String, dynamic>>();
-        setState(() {
-          _fileList = myData.map((item) {
-            item['isSelectedRow'] = false;
-            if (item['createTime'] != null) {
-              item['createTime'] = formatDate(DateTime.parse(item['createTime']), [yyyy, '-', mm, '-', dd, ' ', hh, ':', mm]);
-            }
+  // 获取文件列表方法
+  void _getFileList() async {
+    setState(() => _isShowLoading = true);
 
-            return item;
-          }).toList();
-        });
-      }
-    });
+    final String realPath = '$_basicPath${widget.argsPath ?? ''}';
+
+    final res = await getFileList(realPath);
+    if (res.statusCode == 200) {
+      List<Map<String, dynamic>> myData = (res.data['data'] as List).cast<Map<String, dynamic>>();
+      setState(() {
+        _fileList = myData.map((item) {
+          item['isSelectedRow'] = false;
+          if (item['createTime'] != null) {
+            item['createTime'] = formatDate(DateTime.parse(item['createTime']), [yyyy, '-', mm, '-', dd, ' ', hh, ':', mm]);
+          }
+
+          return item;
+        }).toList();
+      });
+    }
+    setState(() => _isShowLoading = false);
+  }
+
+  /// 展示文件项
+  Widget _showFileItemView() {
+    return Flex(
+      direction: Axis.vertical,
+      children: [
+        Expanded(
+          child: ListView.builder(
+            itemCount: _fileList.length,
+            itemExtent: 80,
+            itemBuilder: (context, index) {
+              return FileItem(
+                fileObj: _fileList[index],
+                isShowRadio: _isShowRadio,
+                idx: index,
+                onShowBadge: () {
+                  setState(() {
+                    _isShowBadge = true;
+                  });
+                },
+                onChangeSelected: (int idx, bool value) {
+                  setState(() {
+                    if (!value) {
+                      // 如果所有项都没有选中，则取消多选框
+                      final bool haveSelected = _fileList.where((item) => item['isSelectedRow']).isNotEmpty;
+
+                      if (!haveSelected) {
+                        _isShowRadio = false;
+                      }
+                    } else {
+                      _isShowRadio ? '' : _isShowRadio = true;
+                    }
+
+                    _fileList[idx]['isSelectedRow'] = value;
+                  });
+                },
+                onLoadNewFolder: (String path) {
+                  setState(() {
+                    _basicPath = path;
+                    _getFileList();
+                  });
+                },
+              );
+            },
+          ),
+        ),
+        Visibility(
+          visible: _isShowBadge,
+          child: _getBadge(),
+        ),
+      ],
+    );
+  }
+
+  /// 展示空文件页面
+  Widget _showNoFileView() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: Theme.of(context).scaffoldBackgroundColor,
+          alignment: Alignment.center,
+          padding: EdgeInsets.only(top: constraints.maxHeight * 0.25),
+          child: Column(
+            children: [
+              Image.asset('lib/assets/images/noFile.png', width: 200, height: 200),
+              Text('空文件夹', style: Theme.of(context).textTheme.labelSmall),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -50,39 +134,10 @@ class _MainPageState extends State<MainPage> {
     return Scaffold(
       body: SafeArea(
         child: Container(
-          color: Color.fromRGBO(248, 248, 248, 1),
-          child: Flex(
-            direction: Axis.vertical,
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _fileList.length,
-                  itemBuilder: (context, index) {
-                    return FileItem(
-                      fileObj: _fileList[index],
-                      isShowRadio: _isShowRadio,
-                      onShowBadge: () {
-                        setState(() {
-                          _isShowBadge = true;
-                          _isShowRadio = true;
-                        });
-                      },
-                      // onLoadNewFolder: (String path) {
-                      //   setState(() {
-                      //     _path = path;
-                      //     _getFileList();
-                      //   });
-                      // },
-                    );
-                  },
-                ),
-              ),
-              Visibility(
-                visible: _isShowBadge,
-                child: _getBadge(),
-              ),
-            ],
-          ),
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: _isShowLoading
+            ? CircularProgressIndicator()
+            : _fileList.isEmpty ? _showNoFileView() : _showFileItemView(),
         ),
       ),
     );
@@ -90,7 +145,7 @@ class _MainPageState extends State<MainPage> {
 }
 
 Widget _getBadge() {
-  return  Container(
+  return Container(
     width: double.infinity,
     decoration: BoxDecoration(
         color: Colors.blue,

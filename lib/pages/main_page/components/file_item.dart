@@ -6,15 +6,21 @@ class FileItem extends StatefulWidget {
   final Map<String, dynamic> fileObj;
   // 是否打开全部 radio
   final bool isShowRadio;
+  // 当前文件项索引
+  final int idx;
   // 打开 Badge 的函数
   final VoidCallback? onShowBadge;
   // 进入一个新的文件夹的回调函数
-  final VoidCallback? onLoadNewFolder;
+  final void Function(String)? onLoadNewFolder;
+  // 选中 | 取消选中
+  final void Function(int, bool) onChangeSelected;
 
   const FileItem({
     super.key,
     required this.fileObj,
     required this.isShowRadio,
+    required this.idx,
+    required this.onChangeSelected,
     this.onShowBadge,
     this.onLoadNewFolder
   });
@@ -24,38 +30,38 @@ class FileItem extends StatefulWidget {
 }
 
 class _FileItemState extends State<FileItem> {
-  // 文件 radio 选中值
-  bool _selectedRow = false;
-
   // 展示文件夹
   Widget _showDirectoryView() {
     return GestureDetector(
       onTap: () {
         setState(() {
           if (widget.isShowRadio) {
-            _selectedRow = !_selectedRow;
+            widget.onChangeSelected(widget.idx, !widget.fileObj['isSelectedRow']);
           } else {
             if (widget.onLoadNewFolder != null) {
-              // widget.onLoadNewFolder();
+              // 1.先从路由中拿取当前的 path 参数
+              final args = ModalRoute.of(context)?.settings.arguments;
+              String newPath = '';
+
+              // 2.如何路由中有 path 参数，拼接后赋予新的路由参数
+              if (args is Map<String, dynamic>) {
+                newPath = args['path'];
+              }
+              Navigator.pushNamed(context, '/', arguments: { 'path': '$newPath\\${widget.fileObj['name']}' });
             }
           }
         });
       },
       onLongPress: () {
-        setState(() {
-          // 展示 badge
-          if (widget.onShowBadge != null) {
-            widget.onShowBadge!();
-          }
-          // 展示 radio
-          setState(() {
-            _selectedRow = true;
-          });
-        });
+        if (widget.onShowBadge != null) {
+          widget.onShowBadge!();
+        }
+        // 展示 radio
+        widget.onChangeSelected(widget.idx, !widget.fileObj['isSelectedRow']);
       },
       child: Container(
         height: 80,
-        color: _selectedRow ? Color.fromRGBO(242, 249, 255, 1) : Colors.white,
+        color: widget.fileObj['isSelectedRow'] ? Color.fromRGBO(242, 249, 255, 1) : Theme.of(context).primaryColor,
         padding: EdgeInsets.symmetric(horizontal: 10),
         child: Row(
           children: [
@@ -68,16 +74,11 @@ class _FileItemState extends State<FileItem> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.fileObj['name'] ?? '-', style: TextStyle(fontFamily: 'SourceHanSansCN', fontSize: 16, fontWeight: FontWeight.w800)),
+                  Text(widget.fileObj['name'] ?? '-', style: Theme.of(context).textTheme.titleMedium),
                   SizedBox(height: 8),
                   Text(
                     '${widget.fileObj['createTime']} - ${widget.fileObj['sonCount']}项',
-                    style: TextStyle(
-                      fontFamily: 'SourceHanSansCN',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color.fromRGBO(0, 0, 0, 0.4)
-                    ),
+                    style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ],
               ),
@@ -87,10 +88,10 @@ class _FileItemState extends State<FileItem> {
               child: Padding(
                 padding: EdgeInsets.only(left: 10),
                 child: RadioGroup(
-                  onChanged: (value) {
-                    print('点击了 radio');
+                  onChanged: (_) {
+                    widget.onChangeSelected(widget.idx, !widget.fileObj['isSelectedRow']);
                   },
-                  groupValue: _selectedRow,
+                  groupValue: widget.fileObj['isSelectedRow'] == true,
                   child: Radio(value: true)
                 ),
               ),
@@ -114,25 +115,21 @@ class _FileItemState extends State<FileItem> {
       onTap: () {
         setState(() {
           if (widget.isShowRadio) {
-            _selectedRow = !_selectedRow;
+            widget.onChangeSelected(widget.idx, !widget.fileObj['isSelectedRow']);
           }
         });
       },
       onLongPress: () {
-        setState(() {
-          // 展示 badge
-          if (widget.onShowBadge != null) {
-            widget.onShowBadge!();
-          }
-          // 展示 radio
-          setState(() {
-            _selectedRow = true;
-          });
-        });
+        // 展示 badge
+        if (widget.onShowBadge != null) {
+          widget.onShowBadge!();
+        }
+        // 展示 radio
+        widget.onChangeSelected(widget.idx, !widget.fileObj['isSelectedRow']);
       },
       child: Container(
         height: 80,
-        color: _selectedRow ? Color.fromRGBO(242, 249, 255, 1) : Colors.white,
+        color: widget.fileObj['isSelectedRow'] ? Color.fromRGBO(242, 249, 255, 1) : Colors.white,
         padding: EdgeInsets.symmetric(horizontal: 10),
         child: Row(
           children: [
@@ -161,10 +158,10 @@ class _FileItemState extends State<FileItem> {
             Visibility(
               visible: widget.isShowRadio,
               child: RadioGroup(
-                onChanged: (value) {
-                  print('点击了 radio');
+                onChanged: (_) {
+                  widget.onChangeSelected(widget.idx, !widget.fileObj['isSelectedRow']);
                 },
-                groupValue: _selectedRow,
+                groupValue: widget.fileObj['isSelectedRow'] == true,
                 child: Radio(value: true)
               )
             ),

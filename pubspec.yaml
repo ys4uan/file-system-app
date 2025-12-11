@@ -96,7 +96,7 @@ flutter:
       fonts:
         - asset: lib/assets/fonts/sourceHanSans-Normal.woff2
         - asset: lib/assets/fonts/sourceHanSans-Medium.ttf
-          weight: 600
+          weight: 800
 
     - family: MyIcons
       fonts:
