@@ -10,8 +10,6 @@ class FileItem extends StatefulWidget {
   final int idx;
   // 打开 Badge 的函数
   final VoidCallback? onShowBadge;
-  // 进入一个新的文件夹的回调函数
-  final void Function(String)? onLoadNewFolder;
   // 选中 | 取消选中
   final void Function(int, bool) onChangeSelected;
 
@@ -22,7 +20,6 @@ class FileItem extends StatefulWidget {
     required this.idx,
     required this.onChangeSelected,
     this.onShowBadge,
-    this.onLoadNewFolder
   });
 
   @override
@@ -38,17 +35,15 @@ class _FileItemState extends State<FileItem> {
           if (widget.isShowRadio) {
             widget.onChangeSelected(widget.idx, !widget.fileObj['isSelectedRow']);
           } else {
-            if (widget.onLoadNewFolder != null) {
-              // 1.先从路由中拿取当前的 path 参数
-              final args = ModalRoute.of(context)?.settings.arguments;
-              String newPath = '';
+            // 1.先从路由中拿取当前的 path 参数
+            final args = ModalRoute.of(context)?.settings.arguments;
+            String newPath = '';
 
-              // 2.如何路由中有 path 参数，拼接后赋予新的路由参数
-              if (args is Map<String, dynamic>) {
-                newPath = args['path'];
-              }
-              Navigator.pushNamed(context, '/', arguments: { 'path': '$newPath\\${widget.fileObj['name']}' });
+            // 2.如何路由中有 path 参数，拼接后赋予新的路由参数
+            if (args is Map<String, dynamic>) {
+              newPath = args['path'];
             }
+            Navigator.pushNamed(context, '/', arguments: { 'path': '$newPath\\${widget.fileObj['name']}' });
           }
         });
       },
@@ -87,12 +82,12 @@ class _FileItemState extends State<FileItem> {
               visible: widget.isShowRadio,
               child: Padding(
                 padding: EdgeInsets.only(left: 10),
-                child: RadioGroup(
-                  onChanged: (_) {
-                    widget.onChangeSelected(widget.idx, !widget.fileObj['isSelectedRow']);
-                  },
-                  groupValue: widget.fileObj['isSelectedRow'] == true,
-                  child: Radio(value: true)
+                child:  Visibility(
+                  visible: widget.isShowRadio,
+                  child: Checkbox(
+                    value: widget.fileObj['isSelectedRow'],
+                    onChanged: (value) => widget.onChangeSelected(widget.idx, value!),
+                  ),
                 ),
               ),
             ),
@@ -157,13 +152,10 @@ class _FileItemState extends State<FileItem> {
             SizedBox(width: 10),
             Visibility(
               visible: widget.isShowRadio,
-              child: RadioGroup(
-                onChanged: (_) {
-                  widget.onChangeSelected(widget.idx, !widget.fileObj['isSelectedRow']);
-                },
-                groupValue: widget.fileObj['isSelectedRow'] == true,
-                child: Radio(value: true)
-              )
+              child: Checkbox(
+                value: widget.fileObj['isSelectedRow'],
+                onChanged: (value) => widget.onChangeSelected(widget.idx, value!),
+              ),
             ),
           ],
         ),
