@@ -14,6 +14,7 @@ Map<String, Widget Function(BuildContext)> _getRoutes() {
 ThemeData globalTheme = ThemeData(
   useMaterial3: true,
   textTheme: TextTheme(
+    titleLarge: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.w800),
     titleMedium: TextStyle(fontSize: 16, color: Colors.black, fontWeight: FontWeight.w800),
     titleSmall: TextStyle(fontSize: 12, color: Color.fromRGBO(0, 0, 0, 0.4), fontWeight: FontWeight.w600),
     labelLarge: TextStyle(fontSize: 20, color: Color.fromRGBO(161, 161, 161,1), fontWeight: FontWeight.w600),

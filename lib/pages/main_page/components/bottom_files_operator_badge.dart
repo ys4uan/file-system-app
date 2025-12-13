@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
+typedef BottomIconType = ({ String iconUrl, String label, String onTapFunName });
+
 class BottomFilesOperatorBadge extends StatefulWidget {
-  const BottomFilesOperatorBadge({super.key});
+  // 文件操作集合
+  final Map<String, Function>? operationMap;
+
+  const BottomFilesOperatorBadge({super.key, this.operationMap});
 
   @override
   State<BottomFilesOperatorBadge> createState() => _BottomFilesOperatorBadge();
@@ -9,11 +14,11 @@ class BottomFilesOperatorBadge extends StatefulWidget {
 
 class _BottomFilesOperatorBadge extends State<BottomFilesOperatorBadge> {
   // 底部 badge 的列表数据
-  final List<Map<String, dynamic>> _bottomIconList = [
-    { 'iconUrl': 'lib/assets/images/delete.png', 'label': '删除', 'onTapFun': () {} },
-    { 'iconUrl': 'lib/assets/images/copy.png', 'label': '复制', 'onTapFun': () {} },
-    { 'iconUrl': 'lib/assets/images/cut.png', 'label': '剪切', 'onTapFun': () {} },
-    { 'iconUrl': 'lib/assets/images/edit.png', 'label': '重命名', 'onTapFun': () {} },
+  final List<BottomIconType> _bottomIconList = [
+    (iconUrl: 'lib/assets/images/delete.png', label: '删除', onTapFunName: 'delete'),
+    (iconUrl: 'lib/assets/images/copy.png', label: '复制', onTapFunName: 'copy'),
+    (iconUrl: 'lib/assets/images/cut.png', label: '剪切', onTapFunName: 'cut'),
+    (iconUrl: 'lib/assets/images/edit.png', label: '重命名', onTapFunName: 'rename'),
   ];
 
   /// 底部 badge 中的操作按钮
@@ -39,12 +44,12 @@ class _BottomFilesOperatorBadge extends State<BottomFilesOperatorBadge> {
             height: 60,
             alignment: Alignment.center,
             decoration: disable
-                ? BoxDecoration(
-              color: disable ? Color.fromARGB(30, 0, 0, 0) : Theme.of(context).primaryColor,
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-              border: BoxBorder.all(color: Colors.grey.shade400, width: 1),
-            )
-                : BoxDecoration(),
+              ? BoxDecoration(
+                color: disable ? Color.fromARGB(30, 0, 0, 0) : Theme.of(context).primaryColor,
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+                border: BoxBorder.all(color: Colors.grey.shade400, width: 1),
+              )
+              : BoxDecoration(),
             child: Column(
               spacing: 4,
               children: [
@@ -73,10 +78,16 @@ class _BottomFilesOperatorBadge extends State<BottomFilesOperatorBadge> {
           children: List.generate(_bottomIconList.length, (idx) {
             return Expanded(
               child: _bottomIconButtonComp(
-                iconUrl: _bottomIconList[idx]['iconUrl'],
-                label: _bottomIconList[idx]['label'],
-                onTapFun: _bottomIconList[idx]['onTapFun'],
+                iconUrl: _bottomIconList[idx].iconUrl,
+                label: _bottomIconList[idx].label,
                 disable: false,
+                onTapFun: () {
+                  final curTapFunName = _bottomIconList[idx].onTapFunName;
+
+                  if (widget.operationMap != null && widget.operationMap!.containsKey(curTapFunName)) {
+                    widget.operationMap![curTapFunName]!();
+                  }
+                },
               ),
             );
           }),

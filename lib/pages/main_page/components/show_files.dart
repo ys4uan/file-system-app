@@ -1,5 +1,7 @@
 import 'package:date_format/date_format.dart';
+import 'package:dio/dio.dart';
 import 'package:file_system_app/api/file.dart';
+import 'package:file_system_app/components/loading_button.dart';
 import 'package:file_system_app/pages/main_page/components/bottom_files_operator_badge.dart';
 import 'package:file_system_app/pages/main_page/components/no_files.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +25,25 @@ class _ShowFilesViewState extends State<ShowFilesView> {
   bool _isShowBadge = false;
   // 是否正在加载文件列表
   bool _isShowLoading = false;
-  // 访问文件的基础路径
+
+  /// 获取所有被选中的文件
+  /// - [attrName] 返回被选中文件的指定属性，如不填则返回整个文件对象
+  List<dynamic> _getSelectedFiles({ String? attrName }) {
+    List<dynamic> returnParams = [];
+    
+    for (int i = 0; i < _fileList.length; i++) {
+      final curFile = _fileList[i];
+      if (curFile['selected']) {
+        if (attrName != null && curFile.containsKey(attrName)) {
+          returnParams.add(curFile[attrName]);
+        } else {
+          returnParams.add(curFile);
+        }
+      }
+    }
+
+    return returnParams;
+  }
 
   // 文件列表
   List<Map<String, dynamic>> _fileList = [];
@@ -39,7 +59,7 @@ class _ShowFilesViewState extends State<ShowFilesView> {
       List<Map<String, dynamic>> myData = (res.data['data'] as List).cast<Map<String, dynamic>>();
       setState(() {
         _fileList = myData.map((item) {
-          item['isSelectedRow'] = false;
+          item['selected'] = false;
           if (item['createTime'] != null) {
             item['createTime'] = formatDate(DateTime.parse(item['createTime']), [yyyy, '-', mm, '-', dd, ' ', hh, ':', mm]);
           }
@@ -49,6 +69,107 @@ class _ShowFilesViewState extends State<ShowFilesView> {
       });
     }
     setState(() => _isShowLoading = false);
+  }
+
+  /// 删除/批量删除 文件、目录
+  void _delFiles() async {
+    setState(() => _isShowLoading = true);
+
+    final List<String> params = _getSelectedFiles(attrName: 'fullPath').cast<String>();
+    late Response res;
+
+    if (params.isNotEmpty) {
+      if (params.length == 1) {
+        // 删除
+        res = await deleteFile(params[0]);
+      } else {
+        // 批量删除
+        res = await batchDelFils(params);
+      }
+
+      if (res.statusCode == 200) {
+        _getFileList();
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('error: ${res.data}')));
+      }
+    }
+
+    setState(() {
+      _isShowRadio = false;
+      _isShowLoading = false;
+    });
+  }
+
+  /// 复制/剪切 文件
+  void _copyFiles() async {
+
+  }
+
+  /// 新增文件夹弹窗
+  void _addFolderAlertDialog() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final TextEditingController addFolderControl = TextEditingController(text: '新建文件夹');
+    bool addLoading = false;
+
+    showDialog(
+      context: context, 
+      builder: (context) {
+        // 当实例创建成功后，给下面的 TextField 添加文本值全选功能
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          addFolderControl.selection = TextSelection(
+            baseOffset: 0,
+            extentOffset: addFolderControl.text.length
+          );
+        });
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              insetPadding: EdgeInsets.symmetric(horizontal: 10),
+              title: Text('新建文件夹', style: Theme.of(context).textTheme.titleLarge),
+              content: TextField(
+                controller: addFolderControl,
+                autofocus: true,
+              ),
+              constraints: BoxConstraints(
+                minWidth: screenWidth - 60,
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    addFolderControl.dispose();
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    '取消',
+                    style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.error
+                    )
+                  )
+                ),
+                LoadingButton(
+                  loading: addLoading,
+                  loadingColor: Theme.of(context).colorScheme.primary,
+                  onPressed: () async {
+                    setState(() => addLoading = true);
+
+                    // 新增文件夹
+                    // mkdirFile()
+
+                    setState(() => addLoading = false);
+                  },
+                  text: '确定',
+                  textStyle: Theme.of(context).textTheme.titleMedium!.copyWith(
+                    color: Theme.of(context).colorScheme.primary
+                  ),
+                ),
+              ],
+              backgroundColor: Theme.of(context).primaryColor,
+            );
+          }
+        );
+      }
+    );
   }
 
   Widget _showFiles() {
@@ -71,11 +192,11 @@ class _ShowFilesViewState extends State<ShowFilesView> {
                 },
                 onChangeSelected: (int idx, bool value) {
                   setState(() {
-                    _fileList[idx]['isSelectedRow'] = value;
+                    _fileList[idx]['selected'] = value;
 
                     if (!value) {
                       // 如果所有项都没有选中，则取消多选框 和 badge
-                      final bool haveSelected = _fileList.where((item) => item['isSelectedRow']).isNotEmpty;
+                      final bool haveSelected = _fileList.where((item) => item['selected']).isNotEmpty;
 
                       if (!haveSelected) {
                         _isShowRadio = false;
@@ -92,7 +213,9 @@ class _ShowFilesViewState extends State<ShowFilesView> {
         ),
         Visibility(
           visible: _isShowBadge,
-          child: BottomFilesOperatorBadge(),
+          child: BottomFilesOperatorBadge(
+            operationMap: { 'delete': _delFiles }
+          ),
         ),
       ],
     );
@@ -111,8 +234,44 @@ class _ShowFilesViewState extends State<ShowFilesView> {
   
   @override
   Widget build(BuildContext context) {
-    return _isShowLoading
-      ? _showLoading()
-      : _fileList.isEmpty ? const NoFilesView() : _showFiles();
+    return Column(
+      children: [
+        Container(
+          height: 60,
+          color: Theme.of(context).primaryColor,
+          padding: EdgeInsets.symmetric(horizontal: 10),
+          child: Row(
+            spacing: 10,
+            children: [
+              GestureDetector(
+                onTap: () => _addFolderAlertDialog(),
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Image.asset('lib/assets/images/newFolder.png'),
+                ),
+              ),
+              Expanded(
+                child: TextButton(
+                  onPressed: () {},
+                  child: Text('home', style: Theme.of(context).textTheme.titleLarge),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {},
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Image.asset('lib/assets/images/search.png'),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _isShowLoading
+            ? _showLoading()
+            : _fileList.isEmpty ? const NoFilesView() : _showFiles()
+        ),
+      ],
+    );
   }
 }

@@ -33,7 +33,7 @@ class _FileItemState extends State<FileItem> {
       onTap: () {
         setState(() {
           if (widget.isShowRadio) {
-            widget.onChangeSelected(widget.idx, !widget.fileObj['isSelectedRow']);
+            widget.onChangeSelected(widget.idx, !widget.fileObj['selected']);
           } else {
             // 1.先从路由中拿取当前的 path 参数
             final args = ModalRoute.of(context)?.settings.arguments;
@@ -52,11 +52,11 @@ class _FileItemState extends State<FileItem> {
           widget.onShowBadge!();
         }
         // 展示 radio
-        widget.onChangeSelected(widget.idx, !widget.fileObj['isSelectedRow']);
+        widget.onChangeSelected(widget.idx, !widget.fileObj['selected']);
       },
       child: Container(
         height: 80,
-        color: widget.fileObj['isSelectedRow'] ? Color.fromRGBO(242, 249, 255, 1) : Theme.of(context).primaryColor,
+        color: widget.fileObj['selected'] ? Color.fromRGBO(242, 249, 255, 1) : Theme.of(context).primaryColor,
         padding: EdgeInsets.symmetric(horizontal: 10),
         child: Row(
           children: [
@@ -72,7 +72,7 @@ class _FileItemState extends State<FileItem> {
                   Text(widget.fileObj['name'] ?? '-', style: Theme.of(context).textTheme.titleMedium),
                   SizedBox(height: 8),
                   Text(
-                    '${widget.fileObj['createTime']} - ${widget.fileObj['sonCount']}项',
+                    '${widget.fileObj['createTime']} - ${widget.fileObj['sonCount']} 项',
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ],
@@ -85,7 +85,7 @@ class _FileItemState extends State<FileItem> {
                 child:  Visibility(
                   visible: widget.isShowRadio,
                   child: Checkbox(
-                    value: widget.fileObj['isSelectedRow'],
+                    value: widget.fileObj['selected'],
                     onChanged: (value) => widget.onChangeSelected(widget.idx, value!),
                   ),
                 ),
@@ -110,7 +110,7 @@ class _FileItemState extends State<FileItem> {
       onTap: () {
         setState(() {
           if (widget.isShowRadio) {
-            widget.onChangeSelected(widget.idx, !widget.fileObj['isSelectedRow']);
+            widget.onChangeSelected(widget.idx, !widget.fileObj['selected']);
           }
         });
       },
@@ -120,11 +120,11 @@ class _FileItemState extends State<FileItem> {
           widget.onShowBadge!();
         }
         // 展示 radio
-        widget.onChangeSelected(widget.idx, !widget.fileObj['isSelectedRow']);
+        widget.onChangeSelected(widget.idx, !widget.fileObj['selected']);
       },
       child: Container(
         height: 80,
-        color: widget.fileObj['isSelectedRow'] ? Color.fromRGBO(242, 249, 255, 1) : Colors.white,
+        color: widget.fileObj['selected'] ? Color.fromRGBO(242, 249, 255, 1) : Colors.white,
         padding: EdgeInsets.symmetric(horizontal: 10),
         child: Row(
           children: [
@@ -135,16 +135,11 @@ class _FileItemState extends State<FileItem> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.fileObj['name'], style: TextStyle(fontFamily: 'SourceHanSansCN', fontSize: 16, fontWeight: FontWeight.w800)),
+                  Text(widget.fileObj['name'], style: Theme.of(context).textTheme.titleMedium),
                   SizedBox(height: 8),
                   Text(
                     '${widget.fileObj['createTime']} - ${widget.fileObj['size']}',
-                    style: TextStyle(
-                      fontFamily: 'SourceHanSansCN',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color.fromRGBO(0, 0, 0, 0.4)
-                    ),
+                    style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ],
               ),
@@ -153,7 +148,7 @@ class _FileItemState extends State<FileItem> {
             Visibility(
               visible: widget.isShowRadio,
               child: Checkbox(
-                value: widget.fileObj['isSelectedRow'],
+                value: widget.fileObj['selected'],
                 onChanged: (value) => widget.onChangeSelected(widget.idx, value!),
               ),
             ),
