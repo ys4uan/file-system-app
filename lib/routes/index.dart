@@ -1,4 +1,5 @@
 import 'package:file_system_app/pages/main_page/index.dart';
+import 'package:file_system_app/pages/picture_viewer/index.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,7 +13,15 @@ final GoRouter _router = GoRouter(
 
         return MainPage(key: ValueKey<String>(path));
       }
-    )
+    ),
+    GoRoute(
+      path: '/picture',
+      builder: (context, state) {
+        final pictureList = state.extra as Map<String, dynamic>;
+
+        return PictureViewer(pictureList: pictureList['pictureList']);
+      }
+    ),
   ]
 );
 

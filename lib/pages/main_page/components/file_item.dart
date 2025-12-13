@@ -111,6 +111,8 @@ class _FileItemState extends State<FileItem> {
         setState(() {
           if (widget.isShowRadio) {
             widget.onChangeSelected(widget.idx, !widget.fileObj['selected']);
+          } else {
+
           }
         });
       },
