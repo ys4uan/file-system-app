@@ -110,9 +110,14 @@ class _ShowFilesViewState extends State<ShowFilesView> {
     final screenWidth = MediaQuery.of(context).size.width;
     final TextEditingController addFolderControl = TextEditingController(text: '新建文件夹');
     bool addLoading = false;
+    // 是否展示错误提示
+    bool isShowErrTip = false;
+    // 错误提示文本
+    String? errText = '';
 
     showDialog(
-      context: context, 
+      context: context,
+      barrierDismissible: false,
       builder: (context) {
         // 当实例创建成功后，给下面的 TextField 添加文本值全选功能
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -127,23 +132,36 @@ class _ShowFilesViewState extends State<ShowFilesView> {
             return AlertDialog(
               insetPadding: EdgeInsets.symmetric(horizontal: 10),
               title: Text('新建文件夹', style: Theme.of(context).textTheme.titleLarge),
-              content: TextField(
-                controller: addFolderControl,
-                autofocus: true,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 8,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: addFolderControl,
+                    autofocus: true,
+                  ),
+                  Visibility(
+                    visible: isShowErrTip,
+                    child: Text(errText ?? '', style: Theme.of(context).textTheme.titleSmall!.copyWith(
+                      color: Theme.of(context).colorScheme.error
+                    )),
+                  ),
+                ],
               ),
               constraints: BoxConstraints(
+                maxWidth: screenWidth - 60,
                 minWidth: screenWidth - 60,
               ),
               actions: [
                 TextButton(
                   onPressed: () {
-                    addFolderControl.dispose();
                     Navigator.of(context).pop();
                   },
                   child: Text(
                     '取消',
                     style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                        color: Theme.of(context).colorScheme.error
+                      color: Theme.of(context).colorScheme.error
                     )
                   )
                 ),
@@ -151,12 +169,36 @@ class _ShowFilesViewState extends State<ShowFilesView> {
                   loading: addLoading,
                   loadingColor: Theme.of(context).colorScheme.primary,
                   onPressed: () async {
-                    setState(() => addLoading = true);
+                    if (addLoading) return;
+                    if (addFolderControl.text.isEmpty) {
+                      setState(() {
+                        isShowErrTip = true;
+                        errText = '文件名不能为空！';
+                      });
+                    } else {
+                      setState(() {
+                        isShowErrTip = false;
+                        errText = '';
+                        addLoading = true;
+                      });
 
-                    // 新增文件夹
-                    // mkdirFile()
+                      String routerPath = GoRouter.of(context).routerDelegate.currentConfiguration.uri.queryParameters['path'] ?? '';
+                      String curFilePath = '$_basicPath$routerPath\\${addFolderControl.text}';
 
-                    setState(() => addLoading = false);
+                      final Response res = await mkdirFile(curFilePath);
+
+                      if (res.data['statusCode'] == 200) {
+                        _getFileList();
+                        if (context.mounted) Navigator.of(context).pop();
+                        setState(() => addLoading = false);
+                      } else {
+                        setState(() {
+                          isShowErrTip = true;
+                          errText = res.data.toString();
+                          addLoading = false;
+                        });
+                      }
+                    }
                   },
                   text: '确定',
                   textStyle: Theme.of(context).textTheme.titleMedium!.copyWith(
