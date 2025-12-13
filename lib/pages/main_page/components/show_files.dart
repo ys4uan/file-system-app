@@ -5,13 +5,14 @@ import 'package:file_system_app/components/loading_button.dart';
 import 'package:file_system_app/pages/main_page/components/bottom_files_operator_badge.dart';
 import 'package:file_system_app/pages/main_page/components/no_files.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import 'file_item.dart';
 
 class ShowFilesView extends StatefulWidget {
-  final String? argsPath;
+  final String? path;
 
-  const ShowFilesView({super.key, this.argsPath});
+  const ShowFilesView({super.key, this.path});
 
   @override
   State<ShowFilesView> createState() => _ShowFilesViewState();
@@ -52,9 +53,10 @@ class _ShowFilesViewState extends State<ShowFilesView> {
   void _getFileList() async {
     setState(() => _isShowLoading = true);
 
-    final String realPath = '$_basicPath${widget.argsPath ?? ''}';
-
+    final String routerPath = GoRouter.of(context).routerDelegate.currentConfiguration.uri.queryParameters['path'] ?? '';
+    final String realPath = '$_basicPath$routerPath';
     final res = await getFileList(realPath);
+
     if (res.statusCode == 200) {
       List<Map<String, dynamic>> myData = (res.data['data'] as List).cast<Map<String, dynamic>>();
       setState(() {

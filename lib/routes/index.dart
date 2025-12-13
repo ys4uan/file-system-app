@@ -1,15 +1,20 @@
 import 'package:file_system_app/pages/main_page/index.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-Map<String, Widget Function(BuildContext)> _getRoutes() {
-  return {
-    '/': (context) {
-      final args = ModalRoute.of(context)?.settings.arguments;
+final GoRouter _router = GoRouter(
+  initialLocation: '/',
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (context, state) {
+        final path = state.uri.queryParameters['path'] ?? '';
 
-      return MainPage(argsPath: args is Map<String, dynamic> ? args['path'] : null);
-    },
-  };
-}
+        return MainPage(key: ValueKey<String>(path));
+      }
+    )
+  ]
+);
 
 ThemeData globalTheme = ThemeData(
   useMaterial3: true,
@@ -27,9 +32,8 @@ ThemeData globalTheme = ThemeData(
 );
 
 Widget getRootWidget() {
-  return MaterialApp(
-    initialRoute: '/',
-    routes: _getRoutes(),
+  return MaterialApp.router(
+    routerConfig: _router,
     theme: globalTheme,
   );
 }

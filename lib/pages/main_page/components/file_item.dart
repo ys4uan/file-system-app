@@ -1,5 +1,6 @@
 import 'package:file_system_app/components/icon_font.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class FileItem extends StatefulWidget {
   // 接口返回的文件数据
@@ -36,14 +37,13 @@ class _FileItemState extends State<FileItem> {
             widget.onChangeSelected(widget.idx, !widget.fileObj['selected']);
           } else {
             // 1.先从路由中拿取当前的 path 参数
-            final args = ModalRoute.of(context)?.settings.arguments;
-            String newPath = '';
+            String routerPath = GoRouter.of(context).routerDelegate.currentConfiguration.uri.queryParameters['path'] ?? '';
 
             // 2.如何路由中有 path 参数，拼接后赋予新的路由参数
-            if (args is Map<String, dynamic>) {
-              newPath = args['path'];
-            }
-            Navigator.pushNamed(context, '/', arguments: { 'path': '$newPath\\${widget.fileObj['name']}' });
+            routerPath += '\\${widget.fileObj['name']}';
+
+            final uri = Uri(path: '/', queryParameters: { 'path': routerPath });
+            context.go(uri.toString());
           }
         });
       },
