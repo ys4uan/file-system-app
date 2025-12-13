@@ -10,9 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'file_item.dart';
 
 class ShowFilesView extends StatefulWidget {
-  final String? path;
-
-  const ShowFilesView({super.key, this.path});
+  const ShowFilesView({super.key});
 
   @override
   State<ShowFilesView> createState() => _ShowFilesViewState();
