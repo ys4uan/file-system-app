@@ -53,22 +53,25 @@ class _ShowFilesViewState extends State<ShowFilesView> {
 
     final String routerPath = GoRouter.of(context).routerDelegate.currentConfiguration.uri.queryParameters['path'] ?? '';
     final String realPath = '$_basicPath$routerPath';
-    final res = await getFileList(realPath);
+    try {
+      final res = await getFileList(realPath);
 
-    if (res.statusCode == 200) {
-      List<Map<String, dynamic>> myData = (res.data['data'] as List).cast<Map<String, dynamic>>();
-      setState(() {
-        _fileList = myData.map((item) {
-          item['selected'] = false;
-          if (item['createTime'] != null) {
-            item['createTime'] = formatDate(DateTime.parse(item['createTime']), [yyyy, '-', mm, '-', dd, ' ', hh, ':', mm]);
-          }
+      if (res.statusCode == 200) {
+        List<Map<String, dynamic>> myData = (res.data['data'] as List).cast<Map<String, dynamic>>();
+        setState(() {
+          _fileList = myData.map((item) {
+            item['selected'] = false;
+            if (item['createTime'] != null) {
+              item['createTime'] = formatDate(DateTime.parse(item['createTime']), [yyyy, '-', mm, '-', dd, ' ', hh, ':', mm]);
+            }
 
-          return item;
-        }).toList();
-      });
+            return item;
+          }).toList();
+        });
+      }
+    } finally {
+      setState(() => _isShowLoading = false);
     }
-    setState(() => _isShowLoading = false);
   }
 
   /// 删除/批量删除 文件、目录

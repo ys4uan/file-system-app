@@ -3,6 +3,7 @@ import 'package:file_system_app/pages/picture_viewer/index.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+final GlobalKey<ScaffoldMessengerState> scaffoldMessageKey = GlobalKey<ScaffoldMessengerState>();
 final GoRouter _router = GoRouter(
   initialLocation: '/',
   routes: [
@@ -42,6 +43,7 @@ ThemeData globalTheme = ThemeData(
 
 Widget getRootWidget() {
   return MaterialApp.router(
+    scaffoldMessengerKey: scaffoldMessageKey,
     routerConfig: _router,
     theme: globalTheme,
   );

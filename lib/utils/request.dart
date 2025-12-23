@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:file_system_app/routes/index.dart';
+import 'package:flutter/material.dart';
 
 class DioUtil {
   late Dio _dio;
@@ -32,29 +34,59 @@ class DioUtil {
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
         print('连接超时');
+        showGlobalSnackBar('连接超时');
         break;
       case DioExceptionType.sendTimeout:
         print('发送超时');
+        showGlobalSnackBar('发送超时');
         break;
       case DioExceptionType.receiveTimeout:
         print('接收超时');
+        showGlobalSnackBar('接收超时');
         break;
       case DioExceptionType.badCertificate:
         print('证书错误');
+        showGlobalSnackBar('证书错误');
         break;
       case DioExceptionType.badResponse:
         print('服务器响应错误: ${e.response?.statusCode}');
+        showGlobalSnackBar('服务器响应错误: ${e.response?.statusCode}');
         break;
       case DioExceptionType.cancel:
         print('请求取消');
+        showGlobalSnackBar('请求取消');
         break;
       case DioExceptionType.connectionError:
         print('连接错误');
+        showGlobalSnackBar('连接错误');
         break;
       case DioExceptionType.unknown:
         print('未知错误: ${e.message}');
+        showGlobalSnackBar('未知错误: ${e.message}');
         break;
     }
+  }
+
+  void showGlobalSnackBar(String message) {
+    final messenger = scaffoldMessageKey.currentState;
+    if (messenger == null || !messenger.mounted) return;
+
+    final context = messenger.context;
+    final paddingLeftOrRightWidth = MediaQuery.of(context).size.width * 0.05;
+
+    messenger.showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        content: Text(message),
+        duration: const Duration(milliseconds: 1500),
+        margin: EdgeInsets.only(
+          bottom: 20,
+          left: paddingLeftOrRightWidth,
+          right: paddingLeftOrRightWidth
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      )
+    );
   }
 
   Future<Response> get(String path, {
