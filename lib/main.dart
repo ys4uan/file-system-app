@@ -1,6 +1,9 @@
 import 'package:file_system_app/routes/index.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  runApp(getRootWidget());
+  runApp(
+    ProviderScope(child: getRootWidget()),
+  );
 }

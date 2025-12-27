@@ -12,8 +12,8 @@ final GoRouter _router = GoRouter(
       builder: (context, state) {
         final path = state.uri.queryParameters['path'] ?? '';
 
-        return MainPage(key: ValueKey<String>(path));
-      }
+        return MainPage(routerPath: path);
+      },
     ),
     GoRoute(
       path: '/picture',
