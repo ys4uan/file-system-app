@@ -1,4 +1,5 @@
 import 'package:file_system_app/components/loading_button.dart';
+import 'package:file_system_app/models/file.dart';
 import 'package:file_system_app/store/active_file.dart';
 import 'package:file_system_app/store/current_file_path.dart';
 import 'package:flutter/material.dart';
@@ -125,7 +126,7 @@ class _MainPageState extends ConsumerState<MainPage> {
 
   /// show file item widget
   /// - [fileList] the file data from interface
-  Widget _showFiles(List<Map<String, dynamic>>fileList) {
+  Widget _showFiles(List<BasicFileType> fileList) {
     return  Flex(
       direction: Axis.vertical,
       children: [
@@ -134,9 +135,9 @@ class _MainPageState extends ConsumerState<MainPage> {
             itemCount: fileList.length,
             itemExtent: 80,
             itemBuilder: (context, index) {
-              final String fileType = fileList[index]['type'];
-
-              return fileType == 'directory' ? ShowFolderView(fileListIdx: index,) : ShowFileView(fileListIdx: index,);
+              return fileList[index] is DirectoryType
+                ? ShowFolderView(fileListIdx: index)
+                : ShowFileView(fileListIdx: index);
             },
           ),
         ),

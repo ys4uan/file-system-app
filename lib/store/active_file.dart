@@ -11,8 +11,10 @@ class ActiveFile extends _$ActiveFile {
   CustomFiles build() {
     String curPath = ref.watch(currentFilePathProvider);
 
-    print('curPath: $curPath');
-
     return ref.watch(fileStoreProvider(curPath));
+  }
+
+  FileStore getMethods() {
+    return ref.read(fileStoreProvider(state.curPath).notifier);
   }
 }

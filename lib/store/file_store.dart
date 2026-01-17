@@ -10,34 +10,26 @@ part 'file_store.g.dart';
 class FileStore extends _$FileStore {
   @override
   CustomFiles build(String path) {
-    print('111');
-
     Future.microtask(() {
-      print('222');
-
-      getList(params: path);
+      _getList();
     });
 
-    return CustomFiles.init();
+    return CustomFiles.init(curPath: path);
   }
 
   /// 获取文件列表
-  /// - [params] 路由中的路由参数
-  void getList({String? params}) async {
+  void _getList() async {
     state = state.copyWith(getFileStatus: OperationState.loading());
 
-    final String finalPath = '${state.basicPath}$params';
+    final String finalPath = '${state.basicPath}${state.curPath}';
     final res = await getFileList(finalPath);
 
-    if (res.statusCode == 200) {
+    if (res.statusCode == 200 && res.data['statusCode'] == 200) {
       List<Map<String, dynamic>> myData = (res.data['data'] as List).cast<Map<String, dynamic>>();
-      List<Map<String, dynamic>> realDate = myData.map((item) {
-        item['selected'] = false;
-        if (item['createTime'] != null) {
-          item['createTime'] = formatDate(DateTime.parse(item['createTime']), [yyyy, '-', mm, '-', dd, ' ', hh, ':', mm]);
-        }
+      List<BasicFileType> realDate = myData.map((item) {
+        item['createTime'] = formatDate(DateTime.parse(item['createTime']), [yyyy, '-', mm, '-', dd, ' ', hh, ':', mm]);
 
-        return item;
+        return ConvertFileType.fromJson(item);
       }).toList();
 
       state = state.copyWith(fileList: realDate);
@@ -49,20 +41,23 @@ class FileStore extends _$FileStore {
   /// 删除/批量删除 文件、目录
   void delFiles() async {
     state = state.copyWith(delFileStatus: OperationState.loading());
-    final List<String> params = _getSelectedFiles(attrName: 'fullPath').cast<String>();
+    List<String> selectedFilesFullPathList = [];
+    for (var item in state.fileList) {
+      if (item.isSelected) selectedFilesFullPathList.add(item.fullPath);
+    }
     late Response res;
 
-    if (params.isNotEmpty) {
-      if (params.length == 1) {
+    if (selectedFilesFullPathList.isNotEmpty) {
+      if (selectedFilesFullPathList.length == 1) {
         // 删除
-        res = await deleteFile(params[0]);
+        res = await deleteFile(selectedFilesFullPathList[0]);
       } else {
         // 批量删除
-        res = await batchDelFils(params);
+        res = await batchDelFils(selectedFilesFullPathList);
       }
 
-      if (res.statusCode == 200) {
-        getList();
+      if (res.statusCode == 200 && res.data['statusCode'] == 200) {
+        _getList();
       }
     }
 
@@ -75,29 +70,32 @@ class FileStore extends _$FileStore {
     state = state.copyWith(newFolderStatus: OperationState.loading());
     final Response res = await mkdirFile(filePath);
 
-    if (res.data['statusCode'] == 200) {
-      getList();
+    if (res.statusCode == 200 && res.data['statusCode'] == 200) {
+      _getList();
     }
 
     state = state.copyWith(newFolderStatus: OperationState.complete());
   }
 
-  /// 获取所有被选中的文件
-  /// - [attrName] 返回被选中文件的指定属性，如不填则返回整个文件对象
-  List<dynamic> _getSelectedFiles({ String? attrName }) {
-    List<dynamic> returnParams = [];
+  /// 改变文件选中状态
+  /// - [fileIndex] 文件位置索引
+  void onToggleFileSelected(int fileIndex) {
+    List<BasicFileType> newFileList = List<BasicFileType>.from(state.fileList);
+    newFileList[fileIndex].isSelected = !(newFileList[fileIndex].isSelected);
 
-    for (int i = 0; i < state.fileList.length; i++) {
-      final curFile = state.fileList[i];
-      if (curFile['selected']) {
-        if (attrName != null && curFile.containsKey(attrName)) {
-          returnParams.add(curFile[attrName]);
-        } else {
-          returnParams.add(curFile);
-        }
-      }
+    print('1: ${(!newFileList[fileIndex].isSelected) == false}');
+    print('2: ${state.fileList.every((item) => item.isSelected == false)}');
+
+    if ((!newFileList[fileIndex].isSelected) == false && state.fileList.every((item) => item.isSelected == false)) {
+      onToggleMultiSelect();
+      print('????');
     }
 
-    return returnParams;
+    state = state.copyWith(fileList: newFileList);
+  }
+
+  /// 改变多选状态
+  void onToggleMultiSelect() {
+    state = state.copyWith(isMulSelectStatus: !state.isMulSelectStatus);
   }
 }
